@@ -1,0 +1,157 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  # This name uniquely identifies the Deployment
+  name: hal-deployment
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: hal
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: "true"
+      volumes:
+      - name: kube-ssl
+        persistentVolumeClaim:
+          claimName: k8s-ssl-claim
+      - name: hal-storage
+        persistentVolumeClaim:
+          claimName: hal-pv-claim
+      - name: hal-kube-storage
+        persistentVolumeClaim:
+          claimName: hal-kube-pv-claim
+      containers:
+      - name: hal
+        image: gcr.io/spinnaker-marketplace/halyard:stable
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: "accesskey"
+        - name: MINIO_SECRET_KEY
+          value: "secretkey"
+        - name: MINIO_ENDPOINT
+          value: "minio-service.spinnaker.svc.cluster.local:9000"
+        - name: DOMAIN
+          value: "mydomain.com"
+        ports:
+        - containerPort: 8084
+        - containerPort: 9000
+        # Mount the volume into the pod
+        volumeMounts:
+        - name: kube-ssl # must match the volume name, above
+          mountPath: "/etc/kubernets/ssl"
+        - name: hal-storage # must match the volume name, above
+          mountPath: "/home/spinnaker/.hal"
+        - name: hal-kube-storage # must match the volume name, above
+          mountPath: "/home/spinnaker/.kube"
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: kube-ssl-pv
+  labels:
+    type: local
+spec:
+  storageClassName: kube-ssl-pv
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/etc/kubernetes/ssl"
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: hal-pv
+  labels:
+    type: local
+spec:
+  storageClassName: hal-pv
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/hal/storage/hal"
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: hal-kube-pv
+  labels:
+    type: local
+spec:
+  storageClassName: hal-kube-pv
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/hal/storage/hal-kube"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hal-kube-pv-claim
+spec:
+  storageClassName: hal-kube-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kube-ssl-pv-claim
+spec:
+  storageClassName: kube-ssl-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+  #storageClassName:
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hal-pv-claim
+spec:
+  storageClassName: hal-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: spinnaker
+  namespace: spinnaker
+spec:
+  rules:
+  - host: spinnaker.mydomain.com
+    http:
+      paths:
+      - path: "/"
+        backend:
+          serviceName: spin-deck
+          servicePort: 9000
+  - host: spinnaker-api.mydomain.com
+    http:
+      paths:
+      - path: "/"
+        backend:
+          serviceName: spin-gate
+          servicePort: 8084

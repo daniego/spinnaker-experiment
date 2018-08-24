@@ -1,0 +1,40 @@
+---
+centos_network_device: eno16777984
+os_backup_dir: /mnt/common/docker/backups/dcos
+dcos_cluster_name: dcos-test
+dcos_ssh_user: dcaron
+dcos_root_user: dcaron
+dcos_root_passwordhash: $6$rounds=656000$jjRNzfq3ysiQ9k2U$Yo1GSEnvDrSmMRzRCmW.7XahlYZS8CcitqS0s8wdqy7R2mMGvdViKX6udRUzJ4fY4KxWJITnH8v.uNLwuAs541
+dcos_root_dir: /home/{{ dcos_ssh_user }}
+dcos_config_dir: /home/{{ dcos_ssh_user }}/genconf
+dcos_download_url: https://downloads.dcos.io/dcos/stable/{{ dcos_version_new }}/dcos_generate_config.sh
+dcos_bootstrap_url: http://10.80.137.123:85
+dcos_login_uri: http://10.80.137.124/login?redirect_uri=urn:ietf:wg:oauth:2.0:oob
+docker_version: 1.13.1
+
+beats_packages:
+  - auditbeat
+  - filebeat
+  - heartbeat
+  - metricbeat
+  - packetbeat
+
+beats_packages_modules:
+  - dcos
+
+dcos_auth_user: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dcos
+          38333836343161323234306431623665633634356133316661623662643031333538343738323365
+          3062373133393764633238393239663431613133613832660a393866333932613366336634613832
+          32383864313030313565386465333732333461373363623336626530666636613937353531393837
+          3530393030616230640a653661386435376161333837366634653361333435316233336366303838
+          37366237656365313139346234646430333237363237656235326363376235393561
+dcos_auth_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dcos
+          65353133366334376438653538623033646134633637396135323365646236393431653861643163
+          3961626365656364653138333039333865353661623938300a373730353138666566666432356565
+          62303939376537626264363666643466383031346431373763636666346262643462643464326237
+          3632623463666662610a336330333035623764366436626339383362636134316338666633393061
+          3936
+dcos_auth_link:     https://dcos.auth0.com/login?ajs_anonymous_id=&client=3yF5TOSzdlI45Q1xspxzeoGBe9fNxm9m&cluster_id=e32e82d7-b67c-4d99-a4ce-6628762ef074&redirect_uri=urn:ietf:wg:oauth:2.0:oob
+dcos_auth_env:      poc

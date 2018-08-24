@@ -1,0 +1,29 @@
+version: '3'
+services:
+  spinnaker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: /entrypoint.sh
+    image: spinnaker
+    hostname: spinnaker
+    ports:
+      - 9001:9000
+      - 8084:8084
+    depends_on:
+      - minio
+    env_file: .env-spinnaker
+    volumes:
+      - ./entrypoint.sh:/entrypoint.sh
+      - ./storage/hal:/hal
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - 9000:9000
+    env_file: .env-minio
+    volumes:
+      - ./storage/minio/data:/data
+      - ./storage/minio/config:/root/.minio
+
+docker run -d -p 9001:9000 -v ~/storage/minio/data:/data -v ~/storage/minio/config:/root/.minio -e MINIO_ACCESS_KEY="AKIAIOSFODNN7EXAMPLE" -e MINIO_SECRET_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" --restart always --name minio minio/minio server /data

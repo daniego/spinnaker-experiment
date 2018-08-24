@@ -1,0 +1,18 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: php
+  namespace: spinnaker
+spec:
+  rules:
+  - host: node-web-server.mydomain.com
+    http:
+      paths:
+      - path: "/"
+        backend:
+          serviceName: php-service
+          servicePort: 8080
+  backend:
+    serviceName: php-service
+    servicePort: 8080
